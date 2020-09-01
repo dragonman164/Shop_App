@@ -54,6 +54,23 @@ void removeItem(String productId){
       notifyListeners();
 
 }
+
+void removeSingleItem(String productId){
+      if(!_items.containsKey(productId)){
+        return ;
+      }
+      if(_items[productId].quantity>1){
+        _items.update(productId, (exisitngCartItem) =>
+        CartItem(id :exisitngCartItem.id,
+            title: exisitngCartItem.title,
+        price:exisitngCartItem.price,
+        quantity: exisitngCartItem.quantity-1));
+      }
+      else{
+        _items.remove(productId);
+      }
+      notifyListeners();
+}
 void clear(){
       _items = {};
       notifyListeners();
