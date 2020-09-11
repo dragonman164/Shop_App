@@ -3,8 +3,14 @@ import 'package:provider/provider.dart';
 import '../providers/cart.dart' show Cart;
 import '../widgets/cart_item.dart' ;
 import '../providers/orders.dart';
-class CartScreen extends StatelessWidget {
+class CartScreen extends StatefulWidget {
   static const routeName = '/cart';
+
+  @override
+  _CartScreenState createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<Cart>(context);
@@ -34,8 +40,8 @@ class CartScreen extends StatelessWidget {
                     style: TextStyle(
                       color: Theme.of(context).primaryColor,
                     ),),
-                    onPressed: () {
-                      Provider.of<Orders>(context,listen: false).addOrder(cart.items.values.toList(), cart.totalAmount);
+                    onPressed: cart.totalAmount <= 0 ?null:() async{
+                    await  Provider.of<Orders>(context,listen: false).addOrder(cart.items.values.toList(), cart.totalAmount);
                       cart.clear();
                       },
                   ),

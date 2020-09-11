@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'cart.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 
 class OrderItem{
@@ -21,10 +23,46 @@ class Orders with ChangeNotifier{
     return [..._orders];
   }
 
-  void addOrder(List<CartItem> cartProducts,double total){
-    _orders.insert(0, OrderItem(id:DateTime.now().toString(),
+  Future<void> fetchAndSetOrders() async{
+    const url = "https://shop-app-87a68.firebaseio.com/products.json";
+    final response = await http.get(url);
+    final List<OrderItem> loadedOrders = [];
+    final extractedData = json.decode(response.body) as Map<String,dynamic>;
+    if(extractedData == null)
+      return ;
+    extractedData.forEach((orderId, orderData) {
+    loadedOrders.add(OrderItem(id: orderId,
+        amount: orderData['amount'],
+        products: (orderData['products'] as List<dynamic>).
+        map((item) => CartItem(id: item['id'],
+        price: item['price'],
+        quantity: item['quantity'],
+        title: item['title'])).toList(),
+        dateTime: DateTime.parse(orderData['dateTime'])));
+    });
+    _orders = loadedOrders;
+    notifyListeners();
+  }
+
+  Future <void> addOrder(List<CartItem> cartProducts,double total) async{
+    const url = "https://shop-app-87a68.firebaseio.com/products.json";
+    final timestamp = DateTime.now();
+    final response = await http.post(url,body:json.encode({
+     'amount':total,
+      'datetime':timestamp.toIso8601String(),
+      'products':cartProducts.map((cp) => {
+        'id':cp.id,
+        'title':cp.title,
+        'quantity':cp.quantity,
+        'price':cp.price,
+
+      }).toList(),
+
+    }));
+    _orders.insert(0, OrderItem(
+      id:json.decode(response.body)['name'],
       amount: total,
-      dateTime: DateTime.now(),
+      dateTime: timestamp,
       products: cartProducts,
     ));
     notifyListeners();

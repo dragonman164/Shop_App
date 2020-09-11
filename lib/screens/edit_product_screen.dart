@@ -25,6 +25,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   };
   var _isInit = true;
+  var _isLoading = false;
   @override
 
   void initState() {
@@ -68,18 +69,46 @@ class _EditProductScreenState extends State<EditProductScreen> {
     super.dispose();
   }
 
-  void _saveFrom(){
+  Future<void> _saveFrom() async{
     final isValid = _form.currentState.validate();
     if(!isValid){
       return ;
     }
    _form.currentState.save();
+    setState(() {
+      _isLoading = true;
+    });
+
     if(_editedProduct.id!=null){
-      Provider.of<Products>(context,listen: false).updateProduct(_editedProduct.id,_editedProduct);
-    }else
-    Provider.of<Products>(context,listen: false).addProduct(_editedProduct);
-   Navigator.of(context).pop();
-  }
+     await Provider.of<Products>(context,listen: false).updateProduct(_editedProduct.id,_editedProduct);
+      setState(() {
+        _isLoading = false;
+      });
+
+    }else {
+      try{
+        await  Provider.of<Products>(context, listen: false).addProduct(_editedProduct);
+        }catch(error) {
+        return showDialog(context: context,
+            builder: (ctx) => AlertDialog(title: Text("An error occurred!"),content: Text('Something Went Wrong'),
+              actions: [
+                FlatButton(child: Text('Okay'),
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                  },)
+              ],));
+         }
+//         finally{
+//        Navigator.of(context).pop();
+//        setState(() {
+//          _isLoading = false;
+//        });
+//      }
+    }
+    Navigator.of(context).pop();
+
+    }
+
 
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,7 +121,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
         ],
 
       ),
-      body: Padding(
+      body: _isLoading?Center(child: CircularProgressIndicator(),)
+      :Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _form,
